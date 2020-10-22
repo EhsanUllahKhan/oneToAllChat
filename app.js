@@ -41,10 +41,21 @@ io.on('connection', function (socket) {
     socket.on('send message', function (data) {
         console.log("Message is " + data.msg);
         console.log("The user to send mesage is : " + data.toSend);
+        console.log(`Sender is ${socket.nickname}`)
+        if (data.toSend === 'All') {
+            console.log('message: ' + { msg: data.msg, nick: socket.nickname });
+            console.log("Socket id is " + networkSockets[data.toSend]);
+            io.sockets.emit('new message', { msg: data.msg, nick: socket.nickname });
+
+        } else {
+            console.log('message: ' + { msg: data.msg, nick: socket.nickname });
+            console.log("Socket id is " + networkSockets[data.toSend].networkSocket.id)
+            io.to(networkSockets[data.toSend].networkSocket.id).emit('new message', { msg: data.msg, nick: socket.nickname });
+
+        }
         // var netWorkSocket = networkSockets[data.toSend];
-        console.log('message: ' + { msg: data.msg, nick: socket.nickname });
-        console.log("Socket id is " + networkSockets[data.toSend].networkSocket.id)
-        io.to(networkSockets[data.toSend].networkSocket.id).emit('new message', { msg: data.msg, nick: socket.nickname });
+
+        // io.sockets.emit('new message', { msg: data, nick: socket.nickname });	
     });
 
     //disconnected service

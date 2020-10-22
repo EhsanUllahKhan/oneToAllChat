@@ -97,7 +97,7 @@
         //list the user who connected
         socket.on('usernames', function (data) {
             var html = '';
-            var html2 = '';
+            var html2 = "<option value='All'>All</option>";
             for (var nickname in data) //Foreach all nicknames received in data
             {
                 var isNicknameOnline = data[nickname].online //Get the online state
