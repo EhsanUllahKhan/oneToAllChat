@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Simple Group Chat on Node.js</title>
+    <style>
+        .dropbtn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 16px;
+            font-size: 16px;
+            border: none;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f1f1f1;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #ddd;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown:hover .dropbtn {
+            background-color: #3e8e41;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font: 13px Helvetica, Arial;
+        }
+
+        form {
+            background: #fff;
+            padding: 3px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            border-color: #000;
+            border-top-style: solid;
+            border-top-width: 1px;
+        }
+
+        form input {
+            border-style: solid;
+            border-width: 1px;
+            padding: 10px;
+            width: 85%;
+            margin-right: .5%;
+        }
+
+        form button {
+            width: 9%;
+            background: rgb(130, 224, 255);
+            border: none;
+            padding: 10px;
+            margin-left: 2%;
+        }
+
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #messages li {
+            padding: 5px 10px;
+        }
+
+        #messages li:nth-child(odd) {
+            background: #eee;
+        }
+    </style>
+    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+</head>
+
+<body>
+
+    <ul id="Select"></ul>
+
+    <div id="nickWrap">
+        <p>Enter Your Name:</p>
+        <p id="nickError"></p>
+        <form id="setNick">
+            <input size="35" id="nickname"></input>
+            <input style="background-color: #7557f9; color:white; border-radius: 10px;" type="submit"></input>
+        </form>
+    </div>
+
+    <div class="dropdown">
+        <button class="dropbtn">Dropdown</button>
+        <div class="dropdown-content">
+            <ul>
+                <% nick.forEach(function(nicknames){ %>
+                <li>
+                    <%= nick %>
+                </li>
+                <% })%>
+            </ul>
+        </div>
+    </div>
+
+
+    <form action="/" method="POST" id="chatForm">
+        <input id="txt" autocomplete="off" autofocus="on"
+            placeholder="type your message here..." /><button>Send</button>
+    </form>
+    <script>
+        // submit text message without reload/refresh the page
+        $('form').submit(function (e) {
+            e.preventDefault(); // prevents page reloading
+            $('#txt').val('');
+            return false;
+        });
+    </script>
+    <script>
+        var socket = io.connect();
+
+        // add username
+        $('#setNick').submit(function (e) {
+            e.preventDefault();
+            socket.emit('new user', $('#nickname').val(), function (data) {
+                if (data) {
+                    $('#nickWrap').hide();
+                    $('#contentWrap').show();
+                } else {
+                    $('#nickError').html('That username is already taken!  Try again.');
+                }
+            });
+            $('#nickname').val('');
+        });
+
+        //list the user who connected
+        socket.on('usernames', function (data) {
+            var html = '';
+            for (var nickname in data) //Foreach all nicknames received in data
+            {
+                var isNicknameOnline = data[nickname].online //Get the online state
+                var isNicknameOffline = data[nickname].offline
+                //We test the online status
+                if (isNicknameOnline) {
+                    var status = '<font color=green><b>Online</b></font>'
+                } else {
+                    var status = '<font color=red><b>Offline</b></font>'
+                }
+
+                html += nickname + ' :' + status + '<br/>' //print the status
+            }
+            $('#users').html(html);
+        });
+        socket.on('receive_message', function (data) {
+            console.log("WOOOOOOWW");
+            socket.emit('decrypt_message', data);
+
+        });
+        //send the messages
+        $('#send-message').submit(function (e) {
+            e.preventDefault();
+            socket.emit('send message', $('#message').val());
+            $('#message').val('');
+        });
+
+        socket.on('new message', function (data) {
+            $('#chat').append('<b>' + data.nick + ': </b>' + data.msg + "<br/>");
+        });
+    </script>
+</body>
+
+</html>

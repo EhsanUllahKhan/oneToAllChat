@@ -1,0 +1,109 @@
+<html>
+
+<head>
+    <title>Socket.IO chat</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <style>
+        #chat {
+            height: 500px;
+            text-align: center;
+        }
+
+        #contentWrap {
+            display: none;
+        }
+
+        #chatWrap {
+            float: left;
+            border: 1px #000 solid;
+            border-radius: 10px;
+            margin-left: 450px;
+            border-color: #a4a4a4;
+        }
+
+        #nickWrap {
+            text-align: center;
+            margin: 50px;
+            margin-left: 450px;
+            margin-right: 450px;
+            border: 1px solid #a4a4a4;
+            border-radius: 10px;
+        }
+
+        #users {
+            position: absolute;
+            top: 10px;
+            margin-left: 350px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="nickWrap">
+        <p>Enter Your Name:</p>
+        <p id="nickError"></p>
+        <form id="setNick">
+            <input size="35" id="nickname"></input>
+            <input style="background-color: #7557f9; color:white; border-radius: 10px;" type="submit"></input>
+        </form>
+    </div>
+
+    <div id="contentWrap">
+        <div id="users"></div>
+        <div id="chatWrap">
+            <div id="chat"></div>
+            <form id="send-message">
+                <input style="border-radius: 5px;" size="35" id="message"></input>
+                <input style="background-color: #7557f9; color: white;" type="submit"></input>
+            </form>
+        </div>
+
+
+    </div>
+
+    <script>
+        var socket = io.connect();
+        // add username
+        $('#setNick').submit(function (e) {
+            e.preventDefault();
+            socket.emit('new user', $('#nickname').val(), function (data) {
+                if (data) {
+                    $('#nickWrap').hide();
+                    $('#contentWrap').show();
+                } else {
+                    $('#nickError').html('That username is already taken!  Try again.');
+                }
+            });
+            $('#nickname').val('');
+        });
+        //list the user who connected
+        socket.on('usernames', function (data) {
+            var html = '';
+            for (var nickname in data) //Foreach all nicknames received in data
+            {
+                var isNicknameOnline = data[nickname].online //Get the online state
+                var isNicknameOffline = data[nickname].offline
+                //We test the online status
+                if (isNicknameOnline) {
+                    var status = '<font color=green><b>Online</b></font>'
+                } else {
+                    var status = '<font color=red><b>Offline</b></font>'
+                }
+                html += nickname + ' :' + status + '<br/>' //print the status
+            }
+            $('#users').html(html);
+        });
+        //send the messages
+        $('#send-message').submit(function (e) {
+            e.preventDefault();
+            socket.emit('send message', $('#message').val());
+            $('#message').val('');
+        });
+        socket.on('new message', function (data) {
+            $('#chat').append('<b>' + data.nick + ': </b>' + data.msg + "<br/>");
+        });
+    </script>
+</body>
+
+</html>
