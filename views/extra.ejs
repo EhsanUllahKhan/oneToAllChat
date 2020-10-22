@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>Socket.IO chat</title>
+    <title><%= headerTitle %></title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <style>
@@ -49,7 +49,23 @@
         </form>
     </div>
 
-    <div id="contentWrap">
+
+    <script type="text/javascript">
+        $("#selectbox1").change(function () {
+            alert($(this).val());
+        });
+    </script>
+
+
+    <h2 style="text-align: center;">Users connected</h2>
+
+    <div id="dropDown" style="text-align: center;">
+        <select id="selectbox1" name="ddl" onmousedown="this.value='';" ">
+        </select>
+        <button onClick=" GetItemValue('selectbox1');">Get Item</button>
+    </div>
+
+    <div id=" contentWrap">
         <div id="users"></div>
         <div id="chatWrap">
             <div id="chat"></div>
@@ -77,9 +93,11 @@
             });
             $('#nickname').val('');
         });
+
         //list the user who connected
         socket.on('usernames', function (data) {
             var html = '';
+            var html2 = '';
             for (var nickname in data) //Foreach all nicknames received in data
             {
                 var isNicknameOnline = data[nickname].online //Get the online state
@@ -87,19 +105,32 @@
                 //We test the online status
                 if (isNicknameOnline) {
                     var status = '<font color=green><b>Online</b></font>'
+                    var option = "<option value='" + nickname + "'>" + nickname + "</option>";
+
                 } else {
                     var status = '<font color=red><b>Offline</b></font>'
                 }
                 html += nickname + ' :' + status + '<br/>' //print the status
+                html2 += option;
             }
             $('#users').html(html);
+            $('#selectbox1').html(html2);
         });
+
         //send the messages
         $('#send-message').submit(function (e) {
             e.preventDefault();
-            socket.emit('send message', $('#message').val());
+            var e = document.getElementById("selectbox1");
+            var strUser = e.value;
+            console.log("To send mesasge is " + strUser)
+            data = {
+                msg: $('#message').val(),
+                toSend: strUser
+            };
+            socket.emit('send message', data);
             $('#message').val('');
         });
+
         socket.on('new message', function (data) {
             $('#chat').append('<b>' + data.nick + ': </b>' + data.msg + "<br/>");
         });

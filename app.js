@@ -3,9 +3,13 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
 nicknames = {};
+networkSockets = {};
 
 app.get('/', function (req, res) {
-    res.render('extra.ejs', { root: 'views' });
+    res.render('extra.ejs', {
+        headerTitle: "Socket IO chat app",
+        nick: nicknames
+    });
 });
 
 
@@ -20,6 +24,7 @@ io.on('connection', function (socket) {
             callback(true);
             socket.nickname = data;
             nicknames[socket.nickname] = { online: true };
+            networkSockets[socket.nickname] = { networkSocket: socket };
             console.log('user connected: ' + socket.nickname);
             //  io.emit('update_personal', nicknames + ': Online');
             updateNicknames();
@@ -30,14 +35,16 @@ io.on('connection', function (socket) {
 
     function updateNicknames() {
         io.sockets.emit('usernames', nicknames);
-
     }
 
     // send message 
-
     socket.on('send message', function (data) {
-        console.log('message: ' + { msg: data, nick: socket.nickname });
-        io.sockets.emit('new message', { msg: data, nick: socket.nickname });
+        console.log("Message is " + data.msg);
+        console.log("The user to send mesage is : " + data.toSend);
+        // var netWorkSocket = networkSockets[data.toSend];
+        console.log('message: ' + { msg: data.msg, nick: socket.nickname });
+        console.log("Socket id is " + networkSockets[data.toSend].networkSocket.id)
+        io.to(networkSockets[data.toSend].networkSocket.id).emit('new message', { msg: data.msg, nick: socket.nickname });
     });
 
     //disconnected service
@@ -46,7 +53,6 @@ io.on('connection', function (socket) {
         console.log('user disconnected:' + socket.nickname)
         if (!socket.nickname) return;
         nicknames[socket.nickname].online = false;
-
         updateNicknames();
     });
 
